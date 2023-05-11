@@ -1052,15 +1052,27 @@ def load_mae_model_vars(model_name):
 
 # Run the encoder and decoder of the m3ae model
 if __name__ == "__main__":
+    from PIL import Image    
+    from numpy import asarray
+    import jax
+    import jax.numpy as jnp
+    import numpy as np
+    from flax import jax_utils
+    from flax import nn
+    from flax import optim
+    from flax.training import checkpoints
+    from flax.training import common_utils
+    from flax.training import train_state
+    from flax.training.common_utils import get_metrics, onehot, shard, shard_prng_key
 
-    text = batch.get("instruct", None)
+    img_path = "/content/drive/MyDrive/research/boat_img.jpg"
+    image = asarray(Image.open(img_path))
 
-    image_batch = batch["image"]
-    image = jnp.array(list(image_batch.values()))
+    text = "A beatiful day to go water skiing"
+
+    image = jnp.array(image)
     image = (image / 255.0).astype(np.float32)
     num_image, batch_size, num_timestep = image.shape[:3]
-
-    state_batch = batch.get("state", None)
 
     text_padding_mask = batch.get("text_padding_mask", None)
 
