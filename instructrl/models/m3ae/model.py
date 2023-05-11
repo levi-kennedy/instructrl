@@ -1048,3 +1048,9 @@ def load_mae_model_vars(model_name):
     checkpoint_data = load_checkpoint(CHECKPOINTS[model_name])
     checkpoint_params = checkpoint_data["state"].params
     return checkpoint_params
+
+
+# Run the encoder and decoder of the m3ae model
+if __name__ == "__main__":
+
+    mmae = MaskedMultimodalAutoencoder()
