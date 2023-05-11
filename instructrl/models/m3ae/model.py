@@ -1053,4 +1053,48 @@ def load_mae_model_vars(model_name):
 # Run the encoder and decoder of the m3ae model
 if __name__ == "__main__":
 
+    text = batch.get("instruct", None)
+
+    image_batch = batch["image"]
+    image = jnp.array(list(image_batch.values()))
+    image = (image / 255.0).astype(np.float32)
+    num_image, batch_size, num_timestep = image.shape[:3]
+
+    state_batch = batch.get("state", None)
+
+    text_padding_mask = batch.get("text_padding_mask", None)
+
+    transfer_type = self.config.transfer_type
+
     mmae = MaskedMultimodalAutoencoder()
+
+    image = jnp.reshape(
+            image, (-1,) + image.shape[-3:]
+        )  # (batch_size * num_image * num_timestep, image.shape[-3:])
+
+    patch = self.patchify(image)
+    if text is not None:
+        tokenized_caption = jnp.tile(text, (patch.shape[0], 1))
+        text_padding_mask = text_padding_mask
+    else:
+        tokenized_caption = None
+        text_padding_mask = None
+
+    image_text_emb = self.pt_model.apply(
+        self.pt_params,
+        patch,
+        tokenized_caption,
+        text_padding_mask,
+        method=self.pt_model.forward_representation,
+        deterministic=True,
+    )
+
+    image_text_emb = concat_multiple_image_emb(image_text_emb)
+    image_text_emb = jax.lax.stop_gradient(image_text_emb)
+
+    image_text_emb = nn.tanh(self.image_text_input(image_text_emb, axis=-1))
+    image_text_emb = image_text_emb + get_1d_sincos_pos_embed(
+        image_text_emb.shape[-1], num_timestep
+    )
+
+   # return 1, image_text_emb, action_emb, state_emb
