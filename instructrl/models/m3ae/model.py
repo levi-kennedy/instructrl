@@ -1,5 +1,6 @@
 from functools import partial
 from typing import Any, Callable, Optional
+import einops
 
 import flax
 import flax.linen as nn
@@ -1032,8 +1033,8 @@ def load_checkpoint(path):
 
 def load_m3ae_model_vars(model_name):
     CHECKPOINTS = {
-        "vit_b16": "gs://instruct-rl/m3ae/vit_b16.pkl",
-        "vit_l16": None,  # TODO: add checkpoint
+        "vit_b16": "/content/drive/MyDrive/research/m3ae/m3ae_base.pkl",
+        "vit_l16": "/content/drive/MyDrive/research/m3ae/m3ae_small.pkl"
     }
     checkpoint_data = load_checkpoint(CHECKPOINTS[model_name])
     checkpoint_params = checkpoint_data["state"].params
@@ -1057,13 +1058,10 @@ if __name__ == "__main__":
     import jax
     import jax.numpy as jnp
     import numpy as np
-    from flax import jax_utils
     from flax import nn
-    from flax import optim
-    from flax.training import checkpoints
-    from flax.training import common_utils
-    from flax.training import train_state
-    from flax.training.common_utils import get_metrics, onehot, shard, shard_prng_key
+    import transformers
+    
+ 
 
     img_path = "/content/drive/MyDrive/research/boat_img.jpg"
     image = asarray(Image.open(img_path))
@@ -1072,19 +1070,38 @@ if __name__ == "__main__":
 
     image = jnp.array(image)
     image = (image / 255.0).astype(np.float32)
-    num_image, batch_size, num_timestep = image.shape[:3]
+    num_image  = 1
+    batch_size = 1
+    
 
-    text_padding_mask = batch.get("text_padding_mask", None)
+    text_padding_mask = 1024
 
-    transfer_type = self.config.transfer_type
+    transfer_type = 'm3ae_vit_b16'
+    model_type    = 'vit_base'
 
-    mmae = MaskedMultimodalAutoencoder()
 
-    image = jnp.reshape(
-            image, (-1,) + image.shape[-3:]
-        )  # (batch_size * num_image * num_timestep, image.shape[-3:])
+    # image = jnp.reshape(
+    #         image, (-1,) + image.shape[-3:]
+    #     )  # (batch_size * num_image * num_timestep, image.shape[-3:])
 
-    patch = self.patchify(image)
+    model_name = transfer_type.split("_", 1)[1]
+    text_vocab_size = transformers.BertTokenizer.from_pretrained(
+        "bert-base-uncased"
+    ).vocab_size
+    pt_model = MaskedMultimodalAutoencoder(
+        config.m3ae, text_vocab_size=text_vocab_size
+    )
+    self.pt_params = m3ae.load_m3ae_model_vars(model_name)
+    self.image_text_input = nn.Dense(self.config.emb_dim)
+
+    patch_dim = 16
+    patchify = lambda x: einops.rearrange(
+        x,
+        "b (h p1) (w p2) c -> b (h w) (p1 p2 c)",
+        p1=patch_dim,
+        p2=patch_dim,
+    )
+    patch = patchify(image)
     if text is not None:
         tokenized_caption = jnp.tile(text, (patch.shape[0], 1))
         text_padding_mask = text_padding_mask
@@ -1108,5 +1125,7 @@ if __name__ == "__main__":
     image_text_emb = image_text_emb + get_1d_sincos_pos_embed(
         image_text_emb.shape[-1], num_timestep
     )
+
+    
 
    # return 1, image_text_emb, action_emb, state_emb
