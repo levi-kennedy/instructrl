@@ -1091,8 +1091,8 @@ if __name__ == "__main__":
     pt_model = MaskedMultimodalAutoencoder(
         config.m3ae, text_vocab_size=text_vocab_size
     )
-    self.pt_params = m3ae.load_m3ae_model_vars(model_name)
-    self.image_text_input = nn.Dense(self.config.emb_dim)
+    pt_params = load_m3ae_model_vars(model_name)
+    image_text_input = nn.Dense(config.emb_dim)
 
     patch_dim = 16
     patchify = lambda x: einops.rearrange(
