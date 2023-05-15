@@ -7,7 +7,7 @@ from flax import linen as nn
 import transformers
 import einops
 
-from .models.m3ae import model as m3ae 
+from models.m3ae import model as m3ae
 #from .utils import get_1d_sincos_pos_embed
 
 
