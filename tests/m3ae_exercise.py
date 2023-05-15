@@ -8,6 +8,7 @@ import transformers
 import einops
 
 from instructrl.models.m3ae.model import MaskedMultimodalAutoencoder, load_m3ae_model_vars
+from instructrl.utils import get_1d_sincos_pos_embed
 
 
 # Function to load pretrained model and parameters into the m3ae model and encode an image and text
@@ -62,10 +63,10 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     deterministic=True,
     )
 
-    image_text_emb = concat_multiple_image_emb(image_text_emb)
+    #image_text_emb = concat_multiple_image_emb(image_text_emb)
     image_text_emb = jax.lax.stop_gradient(image_text_emb)
 
-    image_text_emb = nn.tanh(self.image_text_input(image_text_emb, axis=-1))
+    image_text_emb = nn.tanh(image_text_input(image_text_emb, axis=-1))
     image_text_emb = image_text_emb + get_1d_sincos_pos_embed(
     image_text_emb.shape[-1], num_timestep
     )
