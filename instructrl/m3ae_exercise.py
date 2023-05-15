@@ -70,14 +70,14 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     # image_text_emb.shape[-1], num_timestep
     # )
 
-    return image_proc, text_proc, image_text_emb
+    return image_output, text_output
 
 
 
 if __name__ == "__main__":
     img_path = "/content/drive/MyDrive/research/boat_img.jpg"
     text = "A beatiful day to go water skiing"
-    image_proc, text_proc, image_text_emb = EncodeDecodeImageText(img_path, text, num_timestep=1)
+    image_output, text_output = EncodeDecodeImageText(img_path, text, num_timestep=1)
 
 
 
