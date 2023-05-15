@@ -7,7 +7,7 @@ from flax import nn
 import transformers
 import einops
 
-from instructrl.models.m3ae.model import MaskedMultimodalAutoencoder
+from instructrl.models.m3ae.model import MaskedMultimodalAutoencoder, load_m3ae_model_vars
 
 
 # Function to load pretrained model and parameters into the m3ae model and encode an image and text
@@ -23,7 +23,7 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     batch_size = 1
 
 
-    text_padding_mask = 1024
+   
 
     transfer_type = 'm3ae_vit_b16'
     model_type    = 'vit_base'
@@ -33,10 +33,12 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     "bert-base-uncased").vocab_size
 
     pt_model = MaskedMultimodalAutoencoder(
-    config.m3ae, text_vocab_size=text_vocab_size
+    text_vocab_size=text_vocab_size
     )
+
+    emb_dim = 64
     pt_params = load_m3ae_model_vars(model_name)
-    image_text_input = nn.Dense(config.emb_dim)
+    image_text_input = nn.Dense(emb_dim)
 
     patch_dim = 16
     patchify = lambda x: einops.rearrange(
@@ -47,9 +49,10 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     )
 
     tokenized_caption = jnp.tile(text, (patch.shape[0], 1))
-    text_padding_mask = text_padding_mask
     patch = patchify(image)
 
+    text_padding_mask = jnp.ones_like(tokenized_caption)
+    
     image_text_emb = pt_model.apply(
     pt_params,
     patch,
