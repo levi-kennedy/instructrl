@@ -1,3 +1,8 @@
+import sys
+
+
+sys.path.append('/content/instructrl/instructrl/models')
+sys.path.append('/content/instructrl/instructrl/models/m3ae')
 import pickle
 from PIL import Image    
 from numpy import asarray
@@ -7,8 +12,7 @@ import numpy as np
 from flax import linen as nn
 import transformers
 import einops
-import sys
-import models.m3ae as m3ae
+from m3ae.model import MaskedMultimodalAutoencoder
 #from .utils import get_1d_sincos_pos_embed
 
 
@@ -17,7 +21,7 @@ import models.m3ae as m3ae
 # into an image and text instruction.
 def EncodeDecodeImageText(img_path, text, num_timestep=1):
 
-    sys.path.append('/content/instructrl/instructrl/models')
+    
 
     image = asarray(Image.open(img_path))
     image = jnp.array(image)
@@ -36,7 +40,7 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     text_vocab_size = transformers.BertTokenizer.from_pretrained(
         "bert-base-uncased").vocab_size
 
-    pt_model = m3ae.model.MaskedMultimodalAutoencoder(
+    pt_model = MaskedMultimodalAutoencoder(
         text_vocab_size=text_vocab_size
     )
 
@@ -58,13 +62,12 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     # tokenized_caption = jnp.tile(text, (patch.shape[0], 1))
     # patch = patchify(image)
 
-    text_padding_mask = jnp.ones_like(text)
+    text_padding_mask = jnp.ones((1, 1, 1, 1))
     
     image_output, text_output, image_mask, text_mask = pt_model.apply(
     pt_params,
     image,
     text,
-    text_padding_mask,
     deterministic=True,
     )
 
