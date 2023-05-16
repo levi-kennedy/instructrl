@@ -25,13 +25,22 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
 
     image = asarray(Image.open(img_path))
     image = jnp.array(image)
-    image = (image / 255.0).astype(np.float32)
+    image = jnp.reshape(
+        image, (-1,) + image.shape[-3:]
+    )
 
-    # num_image  = 1
-    # batch_size = 1
+    patch_dim = 16
+    patchify = lambda x: einops.rearrange(
+    x,
+    "b (h p1) (w p2) c -> b (h w) (p1 p2 c)",
+    p1=patch_dim,
+    p2=patch_dim,
+    )
 
+    patch = patchify(image)
 
-   
+    emb_dim = 64
+    image_text_input = nn.Dense(emb_dim)
 
     transfer_type = 'm3ae_vit_b16'
     # model_type    = 'vit_base'
@@ -44,30 +53,19 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
         text_vocab_size=text_vocab_size
     )
 
-    emb_dim = 64
+    tokenized_caption = jnp.tile(text, (patch.shape[0], 1))
+
+
     file = open("/content/drive/MyDrive/research/m3ae/m3ae_small.pkl", "rb")
     data = pickle.load(file)
     pt_params = data["state"].params
-
-    image_text_input = nn.Dense(emb_dim)
-
-    patch_dim = 16
-    patchify = lambda x: einops.rearrange(
-    x,
-    "b (h p1) (w p2) c -> b (h w) (p1 p2 c)",
-    p1=patch_dim,
-    p2=patch_dim,
-    )
-
-    # tokenized_caption = jnp.tile(text, (patch.shape[0], 1))
-    patch = patchify(image)
 
     text_padding_mask = jnp.ones((1, 1, 1, 1))
     
     image_output, text_output, image_mask, text_mask = pt_model.apply(
     pt_params,
-    image,
-    text,
+    patch,
+    tokenized_caption,
     deterministic=True,
     )
 
