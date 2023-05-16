@@ -1,3 +1,4 @@
+from functools import partial
 import sys
 
 
@@ -53,9 +54,16 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
         text_vocab_size=text_vocab_size
     )
 
-    tokenized_caption = jnp.tile(text, (patch.shape[0], 1))
+    #tokenized_caption = jnp.tile(text, (patch.shape[0], 1))
 
-
+    tokenizer = partial(
+        transformers.BertTokenizer.from_pretrained("bert-base-uncased"),
+        truncation=True,
+        return_tensors="np",
+        add_special_tokens=False,
+    )
+    tokenized_text = tokenizer(text)["input_ids"].astype(np.long)
+    
     file = open("/content/drive/MyDrive/research/m3ae/m3ae_small.pkl", "rb")
     data = pickle.load(file)
     pt_params = data["state"].params
@@ -65,7 +73,7 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     image_output, text_output, image_mask, text_mask = pt_model.apply(
     pt_params,
     patch,
-    tokenized_caption,
+    tokenized_text,
     deterministic=True,
     )
 
