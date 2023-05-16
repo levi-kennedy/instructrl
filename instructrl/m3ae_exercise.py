@@ -1,3 +1,4 @@
+import pickle
 from PIL import Image    
 from numpy import asarray
 import jax
@@ -6,8 +7,8 @@ import numpy as np
 from flax import linen as nn
 import transformers
 import einops
-
-from models.m3ae import model as m3ae
+import sys
+import models.m3ae as m3ae
 #from .utils import get_1d_sincos_pos_embed
 
 
@@ -15,6 +16,8 @@ from models.m3ae import model as m3ae
 # instruction into an image-text embedding vector and then decode the image-text embedding vector back
 # into an image and text instruction.
 def EncodeDecodeImageText(img_path, text, num_timestep=1):
+
+    sys.path.append('/content/instructrl/instructrl/models')
 
     image = asarray(Image.open(img_path))
     image = jnp.array(image)
@@ -33,12 +36,15 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     text_vocab_size = transformers.BertTokenizer.from_pretrained(
         "bert-base-uncased").vocab_size
 
-    pt_model = m3ae.MaskedMultimodalAutoencoder(
+    pt_model = m3ae.model.MaskedMultimodalAutoencoder(
         text_vocab_size=text_vocab_size
     )
 
     # emb_dim = 64
-    pt_params = m3ae.load_m3ae_model_vars(model_name)
+    file = open("/content/drive/MyDrive/research/m3ae/m3ae_small.pkl", "rb")
+    data = pickle.load(file)
+    pt_params = data["state"].params
+
     # image_text_input = nn.Dense(emb_dim)
 
     # patch_dim = 16
