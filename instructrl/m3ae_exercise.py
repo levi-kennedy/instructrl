@@ -50,7 +50,9 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     text_vocab_size = transformers.BertTokenizer.from_pretrained(
         "bert-base-uncased").vocab_size
 
+    config_m3ae = MaskedMultimodalAutoencoder.get_default_config()
     pt_model = MaskedMultimodalAutoencoder(
+        config_m3ae,
         text_vocab_size=text_vocab_size
     )
 
@@ -64,20 +66,21 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     )
     tokenized_text = tokenizer(text)["input_ids"].astype(np.long)
     
-    file = open("/content/drive/MyDrive/research/m3ae/m3ae_small.pkl", "rb")
+    file = open("/content/drive/MyDrive/research/m3ae/m3ae_base.pkl", "rb")
     data = pickle.load(file)
     pt_params = data["state"].params
 
-    text_padding_mask = jnp.ones((1, 1, 1, 1))
+    text_padding_mask = jnp.ones_like(tokenized_text)
     
     image_output, text_output, image_mask, text_mask = pt_model.apply(
     pt_params,
     patch,
     tokenized_text,
+    text_padding_mask,
     deterministic=True,
     )
 
-    # #image_text_emb = concat_multiple_image_emb(image_text_emb)
+    # image_text_emb = concat_multiple_image_emb(image_text_emb)
     # image_text_emb = jax.lax.stop_gradient(image_text_emb)
 
     # image_text_emb = nn.tanh(image_text_input(image_text_emb, axis=-1))
