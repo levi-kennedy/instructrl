@@ -85,7 +85,7 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
 
 if __name__ == "__main__":
     img_path = "/content/drive/MyDrive/research/boat_img.jpg"
-    text = "A beatiful day to go water skiing"
+    text = "A beautiful day to go water skiing"
     image_output, text_output = EncodeDecodeImageText(img_path, text, num_timestep=1)
 
 
