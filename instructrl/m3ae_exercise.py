@@ -44,23 +44,23 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
         text_vocab_size=text_vocab_size
     )
 
-    # emb_dim = 64
+    emb_dim = 64
     file = open("/content/drive/MyDrive/research/m3ae/m3ae_small.pkl", "rb")
     data = pickle.load(file)
     pt_params = data["state"].params
 
-    # image_text_input = nn.Dense(emb_dim)
+    image_text_input = nn.Dense(emb_dim)
 
-    # patch_dim = 16
-    # patchify = lambda x: einops.rearrange(
-    # x,
-    # "b (h p1) (w p2) c -> b (h w) (p1 p2 c)",
-    # p1=patch_dim,
-    # p2=patch_dim,
-    # )
+    patch_dim = 16
+    patchify = lambda x: einops.rearrange(
+    x,
+    "b (h p1) (w p2) c -> b (h w) (p1 p2 c)",
+    p1=patch_dim,
+    p2=patch_dim,
+    )
 
     # tokenized_caption = jnp.tile(text, (patch.shape[0], 1))
-    # patch = patchify(image)
+    patch = patchify(image)
 
     text_padding_mask = jnp.ones((1, 1, 1, 1))
     
