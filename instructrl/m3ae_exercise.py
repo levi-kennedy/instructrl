@@ -53,13 +53,7 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     text_vocab_size = transformers.BertTokenizer.from_pretrained(
         "bert-base-uncased").vocab_size
 
-    set_random_seed(42)
-
-    config_m3ae = MaskedMultimodalAutoencoder.get_default_config()
-    pt_model = MaskedMultimodalAutoencoder(
-        config_m3ae,
-        text_vocab_size=text_vocab_size
-    )
+    
 
     #tokenized_caption = jnp.tile(text, (patch.shape[0], 1))
 
@@ -78,19 +72,13 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     text_padding_mask = jnp.ones_like(tokenized_text)
     
 
-    global jax_utils_rng
-    jax_utils_rng = random.PRNGKey(42)    
+    set_random_seed(42)
 
-    configs = pt_model.init(
-    jax_utils_rng,
-    patch,
-    tokenized_text,
-    text_padding_mask,    
+    config_m3ae = MaskedMultimodalAutoencoder.get_default_config()
+    pt_model = MaskedMultimodalAutoencoder(
+        config_m3ae,
+        text_vocab_size=text_vocab_size
     )
-
-
-
-
 
     image_output, text_output, image_mask, text_mask = pt_model.apply(
     pt_params,
