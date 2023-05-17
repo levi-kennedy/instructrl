@@ -1,9 +1,9 @@
-from functools import partial
 import sys
-
 
 sys.path.append('/content/instructrl/instructrl/models')
 sys.path.append('/content/instructrl/instructrl/models/m3ae')
+
+from functools import partial
 import pickle
 from PIL import Image    
 from numpy import asarray
@@ -13,16 +13,19 @@ import numpy as np
 from flax import linen as nn
 import transformers
 import einops
-from m3ae.model import MaskedMultimodalAutoencoder
+from models.m3ae.model import MaskedMultimodalAutoencoder
+from models.m3ae.utils import set_random_seed
+from models.m3ae.jax_utils import JaxRNG
+from jax import random
+
+
 #from .utils import get_1d_sincos_pos_embed
 
 
 # Function to load pretrained model and parameters into the m3ae model and encode an image and text
 # instruction into an image-text embedding vector and then decode the image-text embedding vector back
 # into an image and text instruction.
-def EncodeDecodeImageText(img_path, text, num_timestep=1):
-
-    
+def EncodeDecodeImageText(img_path, text, num_timestep=1):    
 
     image = asarray(Image.open(img_path))
     image = jnp.array(image)
@@ -40,15 +43,17 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
 
     patch = patchify(image)
 
-    emb_dim = 64
-    image_text_input = nn.Dense(emb_dim)
+    # emb_dim = 64
+    # image_text_input = nn.Dense(emb_dim)
 
-    transfer_type = 'm3ae_vit_b16'
+    # transfer_type = 'm3ae_vit_b16'
     # model_type    = 'vit_base'
 
-    model_name = transfer_type.split("_", 1)[1]
+    # model_name = transfer_type.split("_", 1)[1]
     text_vocab_size = transformers.BertTokenizer.from_pretrained(
         "bert-base-uncased").vocab_size
+
+    set_random_seed(42)
 
     config_m3ae = MaskedMultimodalAutoencoder.get_default_config()
     pt_model = MaskedMultimodalAutoencoder(
@@ -72,6 +77,21 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
 
     text_padding_mask = jnp.ones_like(tokenized_text)
     
+
+    global jax_utils_rng
+    jax_utils_rng = random.PRNGKey(42)    
+
+    configs = pt_model.init(
+    jax_utils_rng,
+    patch,
+    tokenized_text,
+    text_padding_mask,    
+    )
+
+
+
+
+
     image_output, text_output, image_mask, text_mask = pt_model.apply(
     pt_params,
     patch,
@@ -96,7 +116,5 @@ if __name__ == "__main__":
     img_path = "/content/drive/MyDrive/research/boat_img.jpg"
     text = "A beautiful day to go water skiing"
     image_output, text_output = EncodeDecodeImageText(img_path, text, num_timestep=1)
-
-
 
 
