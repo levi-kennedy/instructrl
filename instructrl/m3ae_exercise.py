@@ -27,6 +27,9 @@ from jax import random
 # into an image and text instruction.
 def EncodeDecodeImageText(img_path, text, num_timestep=1):    
 
+    
+    set_random_seed(42)
+
     image = asarray(Image.open(img_path))
     image = jnp.array(image)
     image = jnp.reshape(
@@ -71,8 +74,7 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
 
     text_padding_mask = jnp.ones_like(tokenized_text)
     
-
-    set_random_seed(42)
+    
 
     config_m3ae = MaskedMultimodalAutoencoder.get_default_config()
     pt_model = MaskedMultimodalAutoencoder(
@@ -85,6 +87,7 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     patch,
     tokenized_text,
     text_padding_mask,
+    method=pt_model.forward_representation,
     deterministic=True,
     )
 
@@ -103,6 +106,7 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
 if __name__ == "__main__":
     img_path = "/content/drive/MyDrive/research/boat_img.jpg"
     text = "A beautiful day to go water skiing"
+
     image_output, text_output = EncodeDecodeImageText(img_path, text, num_timestep=1)
 
 
