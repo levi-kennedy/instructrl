@@ -25,7 +25,7 @@ from jax import random
 # Function to load pretrained model and parameters into the m3ae model and encode an image and text
 # instruction into an image-text embedding vector and then decode the image-text embedding vector back
 # into an image and text instruction.
-def EncodeDecodeImageText(img_path, text, num_timestep=1):    
+def encode_decode_image_text(img_path, text, num_timestep=1):    
 
     
     set_random_seed(42)
@@ -87,7 +87,7 @@ def EncodeDecodeImageText(img_path, text, num_timestep=1):
     patch,
     tokenized_text,
     text_padding_mask,
-    method=pt_model.forward_representation,
+    rngs={"noise": jax.random.PRNGKey(24)},
     deterministic=True,
     )
 
@@ -107,6 +107,9 @@ if __name__ == "__main__":
     img_path = "/content/drive/MyDrive/research/boat_img.jpg"
     text = "A beautiful day to go water skiing"
 
-    image_output, text_output = EncodeDecodeImageText(img_path, text, num_timestep=1)
+    image_output, text_output = encode_decode_image_text(img_path, text, num_timestep=1)
+
+    print(image_output.shape)
+    print(text_output)
 
 
