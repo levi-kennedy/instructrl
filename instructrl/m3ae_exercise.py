@@ -109,7 +109,10 @@ if __name__ == "__main__":
     
     image_output.save("/content/drive/MyDrive/research/boat_img_out.jpg")
 
-    # get the last three dimensions of the image output
+    # given a numpy 2x2 matrix, extract a value from each row based on the index provided in a 1x2 matrix
+    # and return a 1x2 matrix
+    # def extract_value_from_each_row(matrix, index):
+    #     return jnp.take_along_axis(matrix, index, axis=1)
 
 
 
