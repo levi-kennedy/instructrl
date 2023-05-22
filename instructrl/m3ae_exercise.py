@@ -13,7 +13,7 @@ import numpy as np
 from flax import linen as nn
 import transformers
 import einops
-from models.m3ae.model import MaskedMultimodalAutoencoder
+from models.m3ae.model import MaskedMultimodalAutoencoder, merge_patches
 from models.m3ae.utils import set_random_seed
 from models.m3ae.jax_utils import JaxRNG
 from jax import random
@@ -27,11 +27,10 @@ from jax import random
 # into an image and text instruction.
 def encode_decode_image_text(img_path, text, num_timestep=1):    
 
-    
-    set_random_seed(42)
-
+    # Load image and convert to JAX numpy array
     image = asarray(Image.open(img_path))
     image = jnp.array(image)
+    image = (image / 255.0).astype(np.float32)
     image = jnp.reshape(
         image, (-1,) + image.shape[-3:]
     )
@@ -91,13 +90,7 @@ def encode_decode_image_text(img_path, text, num_timestep=1):
     deterministic=True,
     )
 
-    # image_text_emb = concat_multiple_image_emb(image_text_emb)
-    # image_text_emb = jax.lax.stop_gradient(image_text_emb)
-
-    # image_text_emb = nn.tanh(image_text_input(image_text_emb, axis=-1))
-    # image_text_emb = image_text_emb + get_1d_sincos_pos_embed(
-    # image_text_emb.shape[-1], num_timestep
-    # )
+    
 
     return image_output, text_output
 
@@ -109,7 +102,18 @@ if __name__ == "__main__":
 
     image_output, text_output = encode_decode_image_text(img_path, text, num_timestep=1)
 
-    print(image_output.shape)
-    print(text_output)
+    image_output = merge_patches(image_output, 16)
+    lk = Image.fromarray(image_output[1:].astype(np))
+
+    # Convert tokenized text back to string
+    text_output = tokenizer.decode(text_output[0])
+    
+    # write the image to disk
+    
+    image_output.save("/content/drive/MyDrive/research/boat_img_out.jpg")
+
+    # get the last three dimensions of the image output
+    
 
 
+    
