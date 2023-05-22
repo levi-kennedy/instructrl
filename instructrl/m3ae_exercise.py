@@ -104,16 +104,13 @@ if __name__ == "__main__":
 
     image_output = merge_patches(image_output, 16)
     lk = Image.fromarray(image_output[1:].astype(np))
-
-    # Convert tokenized text back to string
-    text_output = tokenizer.decode(text_output[0])
-    
+      
     # write the image to disk
     
     image_output.save("/content/drive/MyDrive/research/boat_img_out.jpg")
 
     # get the last three dimensions of the image output
-    
+
 
 
     
