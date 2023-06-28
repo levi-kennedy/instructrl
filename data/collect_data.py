@@ -7,7 +7,7 @@ import h5py
 import numpy as np
 import rlbench.backend.task as rlbench_task
 from absl import app, flags
-from rlbench import ObservationConfig
+from rlbench import ObservationConfig, CameraConfig
 from rlbench.action_modes.action_mode import MoveArmThenGripper
 from rlbench.action_modes.arm_action_modes import JointVelocity
 from rlbench.action_modes.gripper_action_modes import Discrete
@@ -16,7 +16,7 @@ from rlbench.backend.utils import task_file_to_task_class
 from rlbench.environment import Environment
 from tqdm.auto import tqdm, trange
 
-from data.utils import convert_keypoints, keypoint_discovery
+from utils import convert_keypoints, keypoint_discovery
 
 FLAGS = flags.FLAGS
 
@@ -37,15 +37,15 @@ flags.DEFINE_list(
 )
 flags.DEFINE_list("image_size", [256, 256], "The size of the images tp save.")
 flags.DEFINE_integer(
-    "train_episodes_per_task", 10, "The number of episodes to collect per task."
+    "train_episodes_per_task", 3, "The number of episodes to collect per task."
 )
 flags.DEFINE_integer(
     "val_episodes_per_task", 1, "The number of episodes to collect per task."
 )
 flags.DEFINE_integer(
-    "variations", -1, "Number of variations to collect per task. -1 for all."
+    "variations", 5, "Number of variations to collect per task. -1 for all."
 )
-flags.DEFINE_integer("num_frames", 4, "Number of frames to stack.")
+flags.DEFINE_integer("num_frames", 2, "Number of frames to stack.")
 flags.DEFINE_integer("vox_size", 16, "Voxel size to discretize translation.")
 flags.DEFINE_integer(
     "rotation_resolution", 5, "Rotation resolution to discretize rotation."
@@ -102,9 +102,12 @@ def create_hdf5(rlbench_env, task, hdf5_name, hdf5_shuffled_name, size=int(1e5))
     dummy_timestep = dummy_demo[0]
 
     keys = list(dummy_timestep.__dict__.keys())
+    # Remove any keys that are None
+    keys = [k for k in keys if dummy_timestep.__dict__[k] is not None]
     keys.extend(TO_BE_ADDED)
-    for key in TO_BE_REMOVED:
-        keys.remove(key)
+    # Remove any keys that are in the TO_BE_REMOVED list
+    keys = [k for k in keys if k not in TO_BE_REMOVED]
+    
 
     h5_file = h5py.File(hdf5_name, "x")
     h5_file_shuffled = h5py.File(hdf5_shuffled_name, "x")
@@ -144,10 +147,12 @@ def collect_data(
     dummy_task = rlbench_env.get_task(task)
     dummy_demo = np.array(dummy_task.get_demos(1, live_demos=True)[0])
     dummy_timestep = dummy_demo[0]
+
     keys = list(dummy_timestep.__dict__.keys())
+    keys = [k for k in keys if dummy_timestep.__dict__[k] is not None]
     keys.extend(TO_BE_ADDED)
-    for key in TO_BE_REMOVED:
-        keys.remove(key)
+    # Remove any keys that are in the TO_BE_REMOVED list
+    keys = [k for k in keys if k not in TO_BE_REMOVED]
 
     total_data = defaultdict(list)
 
@@ -325,13 +330,31 @@ def collect_data(
 def create_env():
     img_size = list(map(int, FLAGS.image_size))
 
-    obs_config = ObservationConfig()
-    obs_config.set_all(True)
-    obs_config.right_shoulder_camera.image_size = img_size
-    obs_config.left_shoulder_camera.image_size = img_size
-    obs_config.overhead_camera.image_size = img_size
-    obs_config.wrist_camera.image_size = img_size
-    obs_config.front_camera.image_size = img_size
+    CAMERA_CONFIG_ON = CameraConfig(
+        rgb=True, 
+        image_size=img_size, 
+        depth=False, 
+        mask=False, 
+        point_cloud=False)
+
+    CAMERA_CONFIG_OFF = CameraConfig(
+        rgb=False, 
+        image_size=img_size, 
+        depth=False, 
+        mask=False, 
+        point_cloud=False)
+
+
+    obs_config = ObservationConfig(
+        left_shoulder_camera=CAMERA_CONFIG_ON,
+        right_shoulder_camera=CAMERA_CONFIG_ON,
+        overhead_camera=CAMERA_CONFIG_OFF,
+        wrist_camera=CAMERA_CONFIG_ON,
+        front_camera=CAMERA_CONFIG_ON
+
+    )
+    obs_config.set_all_low_dim(True)
+    
 
     # Store depth as 0 - 1
     obs_config.right_shoulder_camera.depth_in_meters = False
@@ -446,9 +469,10 @@ def combine_multi_task(rlbench_env, tasks, num_tasks):
     dummy_demo = np.array(dummy_task.get_demos(1, live_demos=True)[0])
     dummy_timestep = dummy_demo[0]
     keys = list(dummy_timestep.__dict__.keys())
+    keys = [k for k in keys if dummy_timestep.__dict__[k] is not None]
     keys.extend(TO_BE_ADDED)
-    for key in TO_BE_REMOVED:
-        keys.remove(key)
+    # Remove any keys that are in the TO_BE_REMOVED list
+    keys = [k for k in keys if k not in TO_BE_REMOVED]
 
     combine_hdf5_files(
         rlbench_env, tasks, num_tasks, dummy_timestep, keys, split="train"

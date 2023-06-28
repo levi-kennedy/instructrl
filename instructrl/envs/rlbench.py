@@ -21,7 +21,7 @@ from rlbench.environment import Environment
 from rlbench.observation_config import ObservationConfig
 from yarr.agents.agent import ActResult, VideoSummary
 
-from instructrl.envs.custom import KeypointEnvironment
+from envs.custom import KeypointEnvironment
 
 
 class RLBenchArmGripper:

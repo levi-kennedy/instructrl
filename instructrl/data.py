@@ -22,7 +22,8 @@ class RLBenchDataset(torch.utils.data.Dataset):
     @staticmethod
     def get_default_config(updates=None):
         config = ConfigDict()
-        config.path = "gs://instruct-rl/dataset/variation"
+        # config.path = "gs://instruct-rl/dataset/variation"
+        config.path = "/home/levi/code/instructrl/data/keypoint"
 
         config.start_index = 0
         config.max_length = int(1e9)

@@ -12,9 +12,9 @@ import transformers
 from ml_collections import ConfigDict
 from ml_collections.config_dict import config_dict
 
-from .models.m3ae import model as m3ae
-from .models.openai import model as clip
-from .utils import get_1d_sincos_pos_embed, get_2d_sincos_pos_embed
+from models.m3ae import model as m3ae
+from models.openai import model as clip
+from utils import get_1d_sincos_pos_embed, get_2d_sincos_pos_embed
 
 
 class FeedForward(nn.Module):

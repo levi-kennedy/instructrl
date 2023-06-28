@@ -23,11 +23,11 @@ from flax.training import checkpoints, common_utils, train_state
 from flax.training.train_state import TrainState
 from tqdm.auto import tqdm, trange
 
-from .data import RLBenchDataset, get_cont_action, get_instruct
-from .envs import rollout
-from .envs.rlbench import RLBenchArmGripper
-from .model import BC
-from .utils import (
+from data import RLBenchDataset, get_cont_action, get_instruct
+from envs import rollout
+from envs.rlbench import RLBenchArmGripper
+from model import BC
+from utils import (
     JaxRNG,
     WandBLogger,
     define_flags_with_default,

@@ -10,7 +10,9 @@ from flax.training.train_state import TrainState
 from ml_collections import ConfigDict
 from ml_collections.config_dict import config_dict
 
-
+import sys
+sys.path.append("/home/levi/code/instructrl/instructrl/models")
+                
 def mask_union(mask1, mask2):
     return jnp.logical_or(mask1 > 0, mask2 > 0).astype(jnp.float32)
 
@@ -1033,8 +1035,8 @@ def load_checkpoint(path):
 
 def load_m3ae_model_vars(model_name):
     CHECKPOINTS = {
-        "vit_b16": "/content/drive/MyDrive/research/m3ae/m3ae_base.pkl",
-        "vit_l16": "/content/drive/MyDrive/research/m3ae/m3ae_small.pkl"
+        "vit_b16": "/home/levi/m3ae/m3ae_small.pkl",
+        "vit_l16": "/home/levi/m3ae/m3ae_small.pkl"
     }
     checkpoint_data = load_checkpoint(CHECKPOINTS[model_name])
     checkpoint_params = checkpoint_data["state"].params
